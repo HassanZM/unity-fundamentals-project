@@ -494,6 +494,18 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &770092534
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 770092522}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2cdc712ee4f9aa4f8fd4ad2185a1965, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &943095901
 GameObject:
   m_ObjectHideFlags: 0
@@ -795,6 +807,14 @@ PrefabInstance:
       value: 0.07
       objectReference: {fileID: 0}
     - target: {fileID: 4193023184566902141, guid: c12af3f1ac3ab404c89eb13944ab7407, type: 3}
+      propertyPath: idleSprite
+      value: 
+      objectReference: {fileID: 1499567985400848262, guid: 2b57c2b7820ae6b4f9aa318cb0ed307c, type: 3}
+    - target: {fileID: 4193023184566902141, guid: c12af3f1ac3ab404c89eb13944ab7407, type: 3}
+      propertyPath: jumpSprite
+      value: 
+      objectReference: {fileID: -6317904820854502685, guid: e0e281414d9ad8943b4adfb82d7d34d9, type: 3}
+    - target: {fileID: 4193023184566902141, guid: c12af3f1ac3ab404c89eb13944ab7407, type: 3}
       propertyPath: legacyInput
       value: 0
       objectReference: {fileID: 0}
@@ -822,6 +842,18 @@ PrefabInstance:
       propertyPath: jumpGravityMultiplier
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4193023184566902141, guid: c12af3f1ac3ab404c89eb13944ab7407, type: 3}
+      propertyPath: runningSprites.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4193023184566902141, guid: c12af3f1ac3ab404c89eb13944ab7407, type: 3}
+      propertyPath: 'runningSprites.Array.data[0]'
+      value: 
+      objectReference: {fileID: -5321330015276728506, guid: d7e8bbf2acc514647b3fd9dafc452bec, type: 3}
+    - target: {fileID: 4193023184566902141, guid: c12af3f1ac3ab404c89eb13944ab7407, type: 3}
+      propertyPath: 'runningSprites.Array.data[1]'
+      value: 
+      objectReference: {fileID: 3288175129669233799, guid: 3d8d9a77c4815d945b755cbf18f51b7c, type: 3}
     - target: {fileID: 4683151060754570455, guid: c12af3f1ac3ab404c89eb13944ab7407, type: 3}
       propertyPath: m_Size.x
       value: 1.5
@@ -916,6 +948,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 458059155421876090, guid: c12af3f1ac3ab404c89eb13944ab7407, type: 3}
       insertIndex: -1
       addedObject: {fileID: 770092532}
+    - targetCorrespondingSourceObject: {fileID: 458059155421876090, guid: c12af3f1ac3ab404c89eb13944ab7407, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 770092534}
   m_SourcePrefab: {fileID: 100100000, guid: c12af3f1ac3ab404c89eb13944ab7407, type: 3}
 --- !u!1001 &1737063109
 PrefabInstance:

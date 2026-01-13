@@ -40,17 +40,9 @@ public class PlayerController : MonoBehaviour
     private float dashCooldown;
     [SerializeField, Tooltip("The distance the Dash ability moves you.")]
     private float dashDistance;
-    [Header("Sprites")]
-    [SerializeField]
-    private Sprite idleSprite;
-    [SerializeField]
-    private Sprite[] runningSprites;
-    [SerializeField]
-    private Sprite jumpSprite;
 
     // Inspector invisible variables.
-    private Rigidbody2D playerRigidbody2D;
-    private Animator animator;
+    public Rigidbody2D Rigidbody { get; private set; }
     private bool dashAvailable;
     private bool doubleJumpAvailable;
     private bool isGrounded;
@@ -64,17 +56,18 @@ public class PlayerController : MonoBehaviour
     public float MovementDirection { get; private set; }
 
     public float MoveSpeed => moveSpeed;
+    public bool IsGrounded => GetGroundedStatus();
+    public bool IsIdle => Rigidbody.linearVelocityX == 0;
 
     private void Start()
     {
-        playerRigidbody2D = GetComponent<Rigidbody2D>();
-        animator = GetComponent<Animator>();
+        Rigidbody = GetComponent<Rigidbody2D>();
         MovementDirection = NoMovement;
         isGrounded = true;
         isDashing = false;
         dashAvailable = true;
         doubleJumpAvailable = allowDoubleJump;
-        defaultGravityScale = playerRigidbody2D.gravityScale;
+        defaultGravityScale = Rigidbody.gravityScale;
 
         if (legacyInput)
         {
@@ -91,28 +84,14 @@ public class PlayerController : MonoBehaviour
         };
 
         // BUG: Breaks jumping on slopes.
-        if (isGrounded && playerRigidbody2D.linearVelocity.y == NoMovement)
+        if (isGrounded && Rigidbody.linearVelocity.y == NoMovement)
         {
             jumpCounter = 0;
         }
 
         HandleLegacyInput();
-        HandleAnimation();
     }
 
-    private void HandleAnimation()
-    {
-        animator.SetBool("isRunning", playerRigidbody2D.linearVelocity.x != 0);
-        animator.SetBool("isJumping", !GetGroundedStatus());
-        if (playerRigidbody2D.linearVelocityX < 0)
-        {
-            transform.rotation = Quaternion.AngleAxis(180, Vector3.up);
-        }
-        else
-        {
-            transform.rotation = Quaternion.AngleAxis(0, Vector3.up);
-        }
-    }
     private void FixedUpdate()
     {
         if (legacyInput)
@@ -156,7 +135,16 @@ public class PlayerController : MonoBehaviour
         {
             return;
         }
-        playerRigidbody2D.linearVelocity = new Vector2(MovementDirection * MoveSpeed, playerRigidbody2D.linearVelocity.y);
+        Rigidbody.linearVelocity = new Vector2(MovementDirection * MoveSpeed, Rigidbody.linearVelocity.y);
+
+        if (Rigidbody.linearVelocityX < 0)
+        {
+            transform.rotation = Quaternion.AngleAxis(180f, Vector3.up);
+        }
+        else
+        {
+            transform.rotation = Quaternion.AngleAxis(0f, Vector3.up);
+        }
     }
 
     public void OnMove(InputValue value)
@@ -185,12 +173,11 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        playerRigidbody2D.linearVelocity = new Vector2(
-            playerRigidbody2D.linearVelocity.x,
+        Rigidbody.linearVelocity = new Vector2(
+            Rigidbody.linearVelocity.x,
             0
         );
-        animator.SetBool("isJumping", true);
-        playerRigidbody2D.AddForce(Vector2.up * jumpSpeed, ForceMode2D.Impulse);
+        Rigidbody.AddForce(Vector2.up * jumpSpeed, ForceMode2D.Impulse);
         _ = StartCoroutine(HandleJumpGravity());
     }
 
@@ -227,12 +214,12 @@ public class PlayerController : MonoBehaviour
     private IEnumerator HandleDash()
     {
         Vector2 dashStartPos = transform.position;
-        Vector2 dashForce = new(MovementDirection * dashSpeed, playerRigidbody2D.linearVelocity.y);
+        Vector2 dashForce = new(MovementDirection * dashSpeed, Rigidbody.linearVelocity.y);
 
-        playerRigidbody2D.AddForce(dashForce, ForceMode2D.Impulse);
+        Rigidbody.AddForce(dashForce, ForceMode2D.Impulse);
         isDashing = true;
-        float originalGravity = playerRigidbody2D.gravityScale;
-        playerRigidbody2D.gravityScale = 0f;
+        float originalGravity = Rigidbody.gravityScale;
+        Rigidbody.gravityScale = 0f;
 
         yield return new WaitUntil(() =>
         {
@@ -240,10 +227,10 @@ public class PlayerController : MonoBehaviour
             return isDashFinished;
         });
         isDashing = false;
-        playerRigidbody2D.gravityScale = originalGravity;
+        Rigidbody.gravityScale = originalGravity;
 
         // Apply the negative dash force to remove the force of the dash once it's finished.
-        playerRigidbody2D.AddForce(-dashForce, ForceMode2D.Impulse);
+        Rigidbody.AddForce(-dashForce, ForceMode2D.Impulse);
     }
 
     private IEnumerator HandleDashCooldown()
@@ -270,10 +257,10 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator HandleJumpGravity()
     {
-        yield return new WaitUntil(() => playerRigidbody2D.linearVelocity.y < 0);
-        playerRigidbody2D.gravityScale = jumpGravityScale;
-        yield return new WaitUntil(() => isGrounded || playerRigidbody2D.linearVelocity.y >= 0);
-        playerRigidbody2D.gravityScale = defaultGravityScale;
+        yield return new WaitUntil(() => Rigidbody.linearVelocity.y < 0);
+        Rigidbody.gravityScale = jumpGravityScale;
+        yield return new WaitUntil(() => isGrounded || Rigidbody.linearVelocity.y >= 0);
+        Rigidbody.gravityScale = defaultGravityScale;
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
