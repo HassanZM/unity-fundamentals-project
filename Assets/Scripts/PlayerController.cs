@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(PlayerInput))]
 [RequireComponent(typeof(Rigidbody2D))]
-[RequireComponent(typeof(CircleCollider2D))]
+[RequireComponent(typeof(CapsuleCollider2D))]
 public class PlayerController : MonoBehaviour
 {
     // Const variables
@@ -40,9 +40,17 @@ public class PlayerController : MonoBehaviour
     private float dashCooldown;
     [SerializeField, Tooltip("The distance the Dash ability moves you.")]
     private float dashDistance;
+    [Header("Sprites")]
+    [SerializeField]
+    private Sprite idleSprite;
+    [SerializeField]
+    private Sprite[] runningSprites;
+    [SerializeField]
+    private Sprite jumpSprite;
 
     // Inspector invisible variables.
     private Rigidbody2D playerRigidbody2D;
+    private Animator animator;
     private bool dashAvailable;
     private bool doubleJumpAvailable;
     private bool isGrounded;
@@ -60,6 +68,7 @@ public class PlayerController : MonoBehaviour
     private void Start()
     {
         playerRigidbody2D = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
         MovementDirection = NoMovement;
         isGrounded = true;
         isDashing = false;
@@ -82,14 +91,28 @@ public class PlayerController : MonoBehaviour
         };
 
         // BUG: Breaks jumping on slopes.
-        if (isGrounded && playerRigidbody2D.velocity.y == NoMovement)
+        if (isGrounded && playerRigidbody2D.linearVelocity.y == NoMovement)
         {
             jumpCounter = 0;
         }
 
         HandleLegacyInput();
+        HandleAnimation();
     }
 
+    private void HandleAnimation()
+    {
+        animator.SetBool("isRunning", playerRigidbody2D.linearVelocity.x != 0);
+        animator.SetBool("isJumping", !GetGroundedStatus());
+        if (playerRigidbody2D.linearVelocityX < 0)
+        {
+            transform.rotation = Quaternion.AngleAxis(180, Vector3.up);
+        }
+        else
+        {
+            transform.rotation = Quaternion.AngleAxis(0, Vector3.up);
+        }
+    }
     private void FixedUpdate()
     {
         if (legacyInput)
@@ -98,6 +121,7 @@ public class PlayerController : MonoBehaviour
         }
 
         HandleMovement();
+
     }
 
     private void HandleLegacyInput()
@@ -132,8 +156,7 @@ public class PlayerController : MonoBehaviour
         {
             return;
         }
-
-        playerRigidbody2D.velocity = new Vector2(MovementDirection * MoveSpeed, playerRigidbody2D.velocity.y);
+        playerRigidbody2D.linearVelocity = new Vector2(MovementDirection * MoveSpeed, playerRigidbody2D.linearVelocity.y);
     }
 
     public void OnMove(InputValue value)
@@ -162,11 +185,11 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        playerRigidbody2D.velocity = new Vector2(
-            playerRigidbody2D.velocity.x,
+        playerRigidbody2D.linearVelocity = new Vector2(
+            playerRigidbody2D.linearVelocity.x,
             0
         );
-
+        animator.SetBool("isJumping", true);
         playerRigidbody2D.AddForce(Vector2.up * jumpSpeed, ForceMode2D.Impulse);
         _ = StartCoroutine(HandleJumpGravity());
     }
@@ -187,11 +210,11 @@ public class PlayerController : MonoBehaviour
     {
         Vector2 direction = Vector2.down;
 
-        CircleCollider2D playerCollider = GetComponent<CircleCollider2D>();
+        CapsuleCollider2D playerCollider = GetComponent<CapsuleCollider2D>();
         Vector2 leftPos = transform.position;
-        leftPos.x -= playerCollider.radius;
+        leftPos.x -= playerCollider.size.x / 2;
         Vector2 rightPos = transform.position;
-        rightPos.x += playerCollider.radius;
+        rightPos.x += playerCollider.size.x / 2;
 
         Debug.DrawRay(leftPos, direction, Color.green);
         Debug.DrawRay(rightPos, direction, Color.green);
@@ -201,11 +224,10 @@ public class PlayerController : MonoBehaviour
         return leftHit.collider || rightHit.collider;
     }
 
-
     private IEnumerator HandleDash()
     {
         Vector2 dashStartPos = transform.position;
-        Vector2 dashForce = new(MovementDirection * dashSpeed, playerRigidbody2D.velocity.y);
+        Vector2 dashForce = new(MovementDirection * dashSpeed, playerRigidbody2D.linearVelocity.y);
 
         playerRigidbody2D.AddForce(dashForce, ForceMode2D.Impulse);
         isDashing = true;
@@ -248,9 +270,9 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator HandleJumpGravity()
     {
-        yield return new WaitUntil(() => playerRigidbody2D.velocity.y < 0);
+        yield return new WaitUntil(() => playerRigidbody2D.linearVelocity.y < 0);
         playerRigidbody2D.gravityScale = jumpGravityScale;
-        yield return new WaitUntil(() => isGrounded || playerRigidbody2D.velocity.y >= 0);
+        yield return new WaitUntil(() => isGrounded || playerRigidbody2D.linearVelocity.y >= 0);
         playerRigidbody2D.gravityScale = defaultGravityScale;
     }
 
