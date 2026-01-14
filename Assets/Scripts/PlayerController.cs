@@ -141,7 +141,8 @@ public class PlayerController : MonoBehaviour
         {
             transform.rotation = Quaternion.AngleAxis(180f, Vector3.up);
         }
-        else
+
+        if (Rigidbody.linearVelocityX > 0)
         {
             transform.rotation = Quaternion.AngleAxis(0f, Vector3.up);
         }
@@ -171,6 +172,8 @@ public class PlayerController : MonoBehaviour
             {
                 return;
             }
+            default:
+                break;
         }
 
         Rigidbody.linearVelocity = new Vector2(
@@ -203,8 +206,8 @@ public class PlayerController : MonoBehaviour
         Vector2 rightPos = transform.position;
         rightPos.x += playerCollider.size.x / 2;
 
-        Debug.DrawRay(leftPos, direction, Color.green);
-        Debug.DrawRay(rightPos, direction, Color.green);
+        Debug.DrawRay(leftPos, direction * groundedRayDistance, Color.green);
+        Debug.DrawRay(rightPos, direction * groundedRayDistance, Color.green);
 
         RaycastHit2D leftHit = Physics2D.Raycast(leftPos, direction, groundedRayDistance, groundLayer);
         RaycastHit2D rightHit = Physics2D.Raycast(rightPos, direction, groundedRayDistance, groundLayer);
@@ -213,24 +216,28 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator HandleDash()
     {
+        float previousDirection = MovementDirection;
+        float previousVelocity = Rigidbody.linearVelocity.x;
+        float previousGravity = Rigidbody.gravityScale;
+
         Vector2 dashStartPos = transform.position;
-        Vector2 dashForce = new(MovementDirection * dashSpeed, Rigidbody.linearVelocity.y);
+        Vector2 dashForce = new(MovementDirection * dashSpeed, 0);
 
         Rigidbody.AddForce(dashForce, ForceMode2D.Impulse);
-        isDashing = true;
-        float originalGravity = Rigidbody.gravityScale;
         Rigidbody.gravityScale = 0f;
+        isDashing = true;
 
         yield return new WaitUntil(() =>
         {
             bool isDashFinished = Vector2.Distance(dashStartPos, transform.position) >= dashDistance;
             return isDashFinished;
         });
-        isDashing = false;
-        Rigidbody.gravityScale = originalGravity;
 
-        // Apply the negative dash force to remove the force of the dash once it's finished.
-        Rigidbody.AddForce(-dashForce, ForceMode2D.Impulse);
+        isDashing = false;
+        Rigidbody.gravityScale = previousGravity;
+
+        // Apply the previous velocity in the current direction.
+        Rigidbody.linearVelocityX = Mathf.Abs(previousVelocity) * previousDirection;
     }
 
     private IEnumerator HandleDashCooldown()
