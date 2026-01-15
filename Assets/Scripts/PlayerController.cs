@@ -42,7 +42,7 @@ public class PlayerController : MonoBehaviour
     private float dashDistance;
 
     // Inspector invisible variables.
-    public Rigidbody2D Rigidbody { get; private set; }
+    private Rigidbody2D rb2d;
     private bool dashAvailable;
     private bool doubleJumpAvailable;
     private bool isGrounded;
@@ -55,19 +55,18 @@ public class PlayerController : MonoBehaviour
 
     public float MovementDirection { get; private set; }
 
-    public float MoveSpeed => moveSpeed;
     public bool IsGrounded => GetGroundedStatus();
-    public bool IsIdle => Rigidbody.linearVelocityX == 0;
+    public bool IsIdle => rb2d.linearVelocityX == 0;
 
     private void Start()
     {
-        Rigidbody = GetComponent<Rigidbody2D>();
+        rb2d = GetComponent<Rigidbody2D>();
         MovementDirection = NoMovement;
         isGrounded = true;
         isDashing = false;
         dashAvailable = true;
         doubleJumpAvailable = allowDoubleJump;
-        defaultGravityScale = Rigidbody.gravityScale;
+        defaultGravityScale = rb2d.gravityScale;
 
         if (legacyInput)
         {
@@ -84,7 +83,7 @@ public class PlayerController : MonoBehaviour
         };
 
         // BUG: Breaks jumping on slopes.
-        if (isGrounded && Rigidbody.linearVelocity.y == NoMovement)
+        if (isGrounded && rb2d.linearVelocity.y == NoMovement)
         {
             jumpCounter = 0;
         }
@@ -100,7 +99,11 @@ public class PlayerController : MonoBehaviour
         }
 
         HandleMovement();
+    }
 
+    private void LateUpdate()
+    {
+        VerticalTransformFlip();
     }
 
     private void HandleLegacyInput()
@@ -135,14 +138,18 @@ public class PlayerController : MonoBehaviour
         {
             return;
         }
-        Rigidbody.linearVelocity = new Vector2(MovementDirection * MoveSpeed, Rigidbody.linearVelocity.y);
+        rb2d.linearVelocity = new Vector2(MovementDirection * moveSpeed, rb2d.linearVelocity.y);
 
-        if (Rigidbody.linearVelocityX < 0)
+    }
+
+    private void VerticalTransformFlip()
+    {
+        if (rb2d.linearVelocityX < 0)
         {
             transform.rotation = Quaternion.AngleAxis(180f, Vector3.up);
         }
 
-        if (Rigidbody.linearVelocityX > 0)
+        if (rb2d.linearVelocityX > 0)
         {
             transform.rotation = Quaternion.AngleAxis(0f, Vector3.up);
         }
@@ -176,11 +183,10 @@ public class PlayerController : MonoBehaviour
                 break;
         }
 
-        Rigidbody.linearVelocity = new Vector2(
-            Rigidbody.linearVelocity.x,
-            0
+        rb2d.linearVelocity = new Vector2(
+            MovementDirection * moveSpeed,
+            jumpSpeed
         );
-        Rigidbody.AddForce(Vector2.up * jumpSpeed, ForceMode2D.Impulse);
         _ = StartCoroutine(HandleJumpGravity());
     }
 
@@ -206,8 +212,8 @@ public class PlayerController : MonoBehaviour
         Vector2 rightPos = transform.position;
         rightPos.x += playerCollider.size.x / 2;
 
-        Debug.DrawRay(leftPos, direction * groundedRayDistance, Color.green);
-        Debug.DrawRay(rightPos, direction * groundedRayDistance, Color.green);
+        Debug.DrawRay(leftPos, direction * groundedRayDistance, Color.red);
+        Debug.DrawRay(rightPos, direction * groundedRayDistance, Color.red);
 
         RaycastHit2D leftHit = Physics2D.Raycast(leftPos, direction, groundedRayDistance, groundLayer);
         RaycastHit2D rightHit = Physics2D.Raycast(rightPos, direction, groundedRayDistance, groundLayer);
@@ -217,14 +223,14 @@ public class PlayerController : MonoBehaviour
     private IEnumerator HandleDash()
     {
         float previousDirection = MovementDirection;
-        float previousVelocity = Rigidbody.linearVelocity.x;
-        float previousGravity = Rigidbody.gravityScale;
+        float previousVelocity = rb2d.linearVelocity.x;
+        float previousGravity = rb2d.gravityScale;
 
         Vector2 dashStartPos = transform.position;
         Vector2 dashForce = new(MovementDirection * dashSpeed, 0);
 
-        Rigidbody.AddForce(dashForce, ForceMode2D.Impulse);
-        Rigidbody.gravityScale = 0f;
+        rb2d.AddForce(dashForce, ForceMode2D.Impulse);
+        rb2d.gravityScale = 0f;
         isDashing = true;
 
         yield return new WaitUntil(() =>
@@ -234,10 +240,10 @@ public class PlayerController : MonoBehaviour
         });
 
         isDashing = false;
-        Rigidbody.gravityScale = previousGravity;
+        rb2d.gravityScale = previousGravity;
 
         // Apply the previous velocity in the current direction.
-        Rigidbody.linearVelocityX = Mathf.Abs(previousVelocity) * previousDirection;
+        rb2d.linearVelocityX = Mathf.Abs(previousVelocity) * previousDirection;
     }
 
     private IEnumerator HandleDashCooldown()
@@ -262,12 +268,13 @@ public class PlayerController : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
+    // Turn gravity off while moving upwards.
     private IEnumerator HandleJumpGravity()
     {
-        yield return new WaitUntil(() => Rigidbody.linearVelocity.y < 0);
-        Rigidbody.gravityScale = jumpGravityScale;
-        yield return new WaitUntil(() => isGrounded || Rigidbody.linearVelocity.y >= 0);
-        Rigidbody.gravityScale = defaultGravityScale;
+        yield return new WaitUntil(() => rb2d.linearVelocity.y < 0);
+        rb2d.gravityScale = jumpGravityScale;
+        yield return new WaitUntil(() => isGrounded || rb2d.linearVelocity.y >= 0);
+        rb2d.gravityScale = defaultGravityScale;
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
