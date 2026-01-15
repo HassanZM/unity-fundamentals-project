@@ -12,7 +12,7 @@ public class CameraFollow : MonoBehaviour
     [SerializeField, Tooltip("Smoothing time for camera follow in seconds.")] 
     private float smoothTime = 0.15f;
     [SerializeField, Tooltip("Set a minimum camera value in the Y direction.")]
-    private float yMinClamp = -10;
+    private float yMinClamp = 0;
     [SerializeField, Tooltip("Set a maximum camera value in the Y direction.")]
     private float yMaxClamp = 10;
 
