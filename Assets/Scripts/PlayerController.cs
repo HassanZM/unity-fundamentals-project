@@ -293,14 +293,4 @@ public class PlayerController : MonoBehaviour
             _ = StartCoroutine(HandleDeath());
         }
     }
-
-    private void OnTriggerEnter2D(Collider2D coll)
-    {
-        if (coll.gameObject.CompareTag("DeathZone"))
-        {
-            _ = StartCoroutine(HandleDeath());
-        }
-    }
-
-
 }
