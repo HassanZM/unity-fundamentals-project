@@ -5,7 +5,7 @@ using UnityEngine;
 [RequireComponent (typeof(CapsuleCollider2D))]
 public class WanderingEnemyController : MonoBehaviour
 {
-    [SerializeField]
+    [SerializeField, Tooltip("The speed of the enemy.")]
     private int speed;
     [SerializeField, Tooltip("The distance to send a ray-cast to check whether the enemy is going to go off a ledge.")]
     private float ledgeCheckDistance;
@@ -24,7 +24,7 @@ public class WanderingEnemyController : MonoBehaviour
         rb2d.linearVelocity = new Vector2(speed, rb2d.linearVelocity.y);
     }
 
-    void Update()
+    private void FixedUpdate()
     {
         HandleMovement();
     }
@@ -36,7 +36,7 @@ public class WanderingEnemyController : MonoBehaviour
             hasFoundLedge = true;
             ChangeDirection();
         }
-        if (!CheckChangeDirection())
+        if (hasFoundLedge && !CheckChangeDirection())
         {
             hasFoundLedge = false;
         }
@@ -58,7 +58,7 @@ public class WanderingEnemyController : MonoBehaviour
 
         RaycastHit2D leftHit = Physics2D.Raycast(leftPos, direction, ledgeCheckDistance);
         RaycastHit2D rightHit = Physics2D.Raycast(rightPos, direction, ledgeCheckDistance);
-        
+
         return !leftHit || !rightHit;
     }
 
@@ -66,20 +66,23 @@ public class WanderingEnemyController : MonoBehaviour
     {
         Vector2 direction = (rb2d.linearVelocityX < 0) ? Vector2.left : Vector2.right;
         Vector2 position = new(transform.position.x, transform.position.y);
+
         RaycastHit2D[] obstacleHits = Physics2D.RaycastAll(position, direction, ledgeCheckDistance);
         Debug.DrawRay(position, direction, Color.red);
+
         foreach (RaycastHit2D hit in obstacleHits)
         {
-            if (hit.transform.CompareTag("Ground") && hit) return true;
+            if (hit.transform.CompareTag("Ground") && hit)
+            {
+                return true;
+            }
         }
         return false;
     }
 
     public void ChangeDirection()
     {
-        Debug.Log(rb2d.linearVelocity);
         rb2d.linearVelocity = new Vector2(-rb2d.linearVelocityX, rb2d.linearVelocityY);
-        Debug.Log(rb2d.linearVelocity);
     }
 
     private void VerticalTransformFlip()

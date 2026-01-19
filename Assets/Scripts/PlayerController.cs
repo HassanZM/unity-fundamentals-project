@@ -8,9 +8,6 @@ using UnityEngine.SceneManagement;
 [RequireComponent(typeof(CapsuleCollider2D))]
 public class PlayerController : MonoBehaviour
 {
-    // Const variables
-    private const float NoMovement = 0f;
-
     // Inspector visible variables
     [Header("General")]
     [SerializeField, Tooltip("Speed for left/right player movement")]
@@ -61,7 +58,7 @@ public class PlayerController : MonoBehaviour
     private void Start()
     {
         rb2d = GetComponent<Rigidbody2D>();
-        MovementDirection = NoMovement;
+        MovementDirection = 0;
         isGrounded = true;
         isDashing = false;
         dashAvailable = true;
@@ -82,8 +79,8 @@ public class PlayerController : MonoBehaviour
             _ => coyoteTimeTimer - Time.deltaTime
         };
 
-        // BUG: Breaks jumping on slopes.
-        if (isGrounded && rb2d.linearVelocity.y == NoMovement)
+        // BUG: Breaks jumping on slopes. No slopes so not an issue.
+        if (isGrounded && rb2d.linearVelocity.y == 0)
         {
             jumpCounter = 0;
         }
@@ -138,20 +135,25 @@ public class PlayerController : MonoBehaviour
         {
             return;
         }
-        rb2d.linearVelocity = new Vector2(MovementDirection * moveSpeed, rb2d.linearVelocity.y);
+        rb2d.linearVelocity = new Vector2(
+            MovementDirection * moveSpeed, 
+            rb2d.linearVelocity.y
+        );
 
     }
 
     private void VerticalTransformFlip()
     {
-        if (rb2d.linearVelocityX < 0)
+        switch (rb2d.linearVelocityX)
         {
-            transform.rotation = Quaternion.AngleAxis(180f, Vector3.up);
-        }
-
-        if (rb2d.linearVelocityX > 0)
-        {
-            transform.rotation = Quaternion.AngleAxis(0f, Vector3.up);
+            case < 0:
+                transform.rotation = Quaternion.AngleAxis(180f, Vector3.up);
+                break;
+            case > 0:
+                transform.rotation = Quaternion.AngleAxis(0f, Vector3.up);
+                break;
+            default:
+                break;
         }
     }
 
@@ -163,12 +165,10 @@ public class PlayerController : MonoBehaviour
 
     public void OnJump()
     {
-        jumpCounter++;
-
         // Only allow jumping when the player is within coyote time unless they have double jump available.
         switch (doubleJumpAvailable)
         {
-            case true when jumpCounter == 2:
+            case true when jumpCounter == 1:
             {
                 _ = StartCoroutine(HandleDoubleJump());
                 jumpCounter = 0;
@@ -180,7 +180,10 @@ public class PlayerController : MonoBehaviour
                 return;
             }
             default:
+            {
+                jumpCounter++;
                 break;
+            }
         }
 
         rb2d.linearVelocity = new Vector2(
@@ -207,10 +210,14 @@ public class PlayerController : MonoBehaviour
         Vector2 direction = Vector2.down;
 
         CapsuleCollider2D playerCollider = GetComponent<CapsuleCollider2D>();
-        Vector2 leftPos = transform.position;
-        leftPos.x -= playerCollider.size.x / 2;
-        Vector2 rightPos = transform.position;
-        rightPos.x += playerCollider.size.x / 2;
+        Vector2 leftPos = new(
+            transform.position.x - playerCollider.size.x / 2,
+            transform.position.y
+        );
+        Vector2 rightPos = new(
+            transform.position.x + playerCollider.size.x / 2,
+            transform.position.y
+        );
 
         Debug.DrawRay(leftPos, direction * groundedRayDistance, Color.red);
         Debug.DrawRay(rightPos, direction * groundedRayDistance, Color.red);
@@ -235,6 +242,7 @@ public class PlayerController : MonoBehaviour
 
         yield return new WaitUntil(() =>
         {
+
             bool isDashFinished = Vector2.Distance(dashStartPos, transform.position) >= dashDistance;
             return isDashFinished;
         });
@@ -281,6 +289,7 @@ public class PlayerController : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Enemy"))
         {
+            Debug.Log("Death!");
             _ = StartCoroutine(HandleDeath());
         }
     }
