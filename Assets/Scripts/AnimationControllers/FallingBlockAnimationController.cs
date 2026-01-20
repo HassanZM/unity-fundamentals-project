@@ -7,13 +7,13 @@ public class FallingBlockAnimationController : MonoBehaviour
 {
     private Animator animator;
     private FallingBlockController fallingBlockController;
-    private static readonly int idle = Animator.StringToHash("Idle");
     private static readonly int fall = Animator.StringToHash("Fall");
+    private static readonly int idle = Animator.StringToHash("Idle");
     private static readonly int rest = Animator.StringToHash("Rest");
     
     private int currentState;
 
-    void Start()
+    private void Start()
     {
         fallingBlockController = GetComponent<FallingBlockController>();
         animator = GetComponent<Animator>();
@@ -22,7 +22,7 @@ public class FallingBlockAnimationController : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    private void Update()
     {
         int state = GetState();
         if (state == currentState)

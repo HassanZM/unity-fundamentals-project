@@ -10,18 +10,20 @@ public class WanderingEnemyController : MonoBehaviour
     [SerializeField, Tooltip("The distance to send a ray-cast to check whether the enemy is going to go off a ledge.")]
     private float ledgeCheckDistance;
 
-    public Rigidbody2D Rb2D => rb2d;
-    private Rigidbody2D rb2d;
+    public Rigidbody2D Rb2D { get; private set; }
 
     private bool hasFoundLedge = false;
     private void Awake()
     {
-        rb2d = GetComponent<Rigidbody2D>();
+        Rb2D = GetComponent<Rigidbody2D>();
     }
 
-    void Start()
+    private void Start()
     {
-        rb2d.linearVelocity = new Vector2(speed, rb2d.linearVelocity.y);
+        Rb2D.linearVelocity = new Vector2(
+            speed, 
+            Rb2D.linearVelocity.y
+        );
     }
 
     private void FixedUpdate()
@@ -48,10 +50,14 @@ public class WanderingEnemyController : MonoBehaviour
         Vector2 direction = Vector2.down;
 
         CapsuleCollider2D collider = GetComponent<CapsuleCollider2D>();
-        Vector2 leftPos = transform.position;
-        leftPos.x -= collider.size.x / 2;
-        Vector2 rightPos = transform.position;
-        rightPos.x += collider.size.x / 2;
+        Vector2 leftPos = new(
+            transform.position.x - collider.size.x / 2,
+            transform.position.y
+        );
+        Vector2 rightPos = new(
+            transform.position.x + collider.size.x / 2,
+            transform.position.y
+        );
 
         Debug.DrawRay(leftPos, direction * ledgeCheckDistance, Color.red);
         Debug.DrawRay(rightPos, direction * ledgeCheckDistance, Color.red);
@@ -64,7 +70,7 @@ public class WanderingEnemyController : MonoBehaviour
 
     private bool CheckObstacle()
     {
-        Vector2 direction = (rb2d.linearVelocityX < 0) ? Vector2.left : Vector2.right;
+        Vector2 direction = (Rb2D.linearVelocityX < 0) ? Vector2.left : Vector2.right;
         Vector2 position = new(transform.position.x, transform.position.y);
 
         RaycastHit2D[] obstacleHits = Physics2D.RaycastAll(position, direction, ledgeCheckDistance);
@@ -82,17 +88,17 @@ public class WanderingEnemyController : MonoBehaviour
 
     public void ChangeDirection()
     {
-        rb2d.linearVelocity = new Vector2(-rb2d.linearVelocityX, rb2d.linearVelocityY);
+        Rb2D.linearVelocity = new Vector2(-Rb2D.linearVelocityX, Rb2D.linearVelocityY);
     }
 
     private void VerticalTransformFlip()
     {
-        if (rb2d.linearVelocityX < 0)
+        if (Rb2D.linearVelocityX < 0)
         {
             GetComponent<SpriteRenderer>().flipX = false;
         }
 
-        if (rb2d.linearVelocityX > 0)
+        if (Rb2D.linearVelocityX > 0)
         {
             GetComponent<SpriteRenderer>().flipX = true;
         }

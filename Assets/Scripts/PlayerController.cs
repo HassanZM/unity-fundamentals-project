@@ -16,6 +16,7 @@ public class PlayerController : MonoBehaviour
     private float respawnTimer;
     [SerializeField, Tooltip("Allows the toggling of the legacy input system.")]
     private bool legacyInput;
+
     [Header("Jump")]
     [SerializeField, Tooltip("Speed of the player jump force.")]
     private float jumpSpeed;
@@ -23,6 +24,7 @@ public class PlayerController : MonoBehaviour
     private float jumpGravityScale = 3.0f;
     [SerializeField, Tooltip("Turns on the double jump option for players.")]
     private bool allowDoubleJump;
+
     [Header("Ground Check")]
     [SerializeField, Tooltip("Set the layer for the player ground check.")]
     private LayerMask groundLayer;
@@ -30,6 +32,7 @@ public class PlayerController : MonoBehaviour
     private float groundedRayDistance;
     [SerializeField, Tooltip("Allows the player to jump after moving off a platform. (Seconds)")]
     private float coyoteTime = 0.07f;
+
     [Header("Dash")]
     [SerializeField, Tooltip("Speed for the Dash.")]
     private float dashSpeed;
@@ -50,25 +53,28 @@ public class PlayerController : MonoBehaviour
     private float coyoteTimeTimer;
     private int jumpCounter;
 
-    public float MovementDirection { get; private set; }
+    public float Direction { get; private set; }
 
     public bool IsGrounded => GetGroundedStatus();
     public bool IsIdle => rb2d.linearVelocityX == 0;
 
-    private void Start()
+    private void Awake()
     {
         rb2d = GetComponent<Rigidbody2D>();
-        MovementDirection = 0;
+        if (legacyInput)
+        {
+            GetComponent<PlayerInput>().enabled = false;
+        }
+    }
+
+    private void Start()
+    {
+        Direction = 0;
         isGrounded = true;
         isDashing = false;
         dashAvailable = true;
         doubleJumpAvailable = allowDoubleJump;
         defaultGravityScale = rb2d.gravityScale;
-
-        if (legacyInput)
-        {
-            GetComponent<PlayerInput>().enabled = false;
-        }
     }
 
     private void Update()
@@ -88,21 +94,6 @@ public class PlayerController : MonoBehaviour
         HandleLegacyInput();
     }
 
-    private void FixedUpdate()
-    {
-        if (legacyInput)
-        {
-            return;
-        }
-
-        HandleMovement();
-    }
-
-    private void LateUpdate()
-    {
-        VerticalTransformFlip();
-    }
-
     private void HandleLegacyInput()
     {
         if (!legacyInput)
@@ -110,11 +101,9 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        MovementDirection = Input.GetAxisRaw("Horizontal");
+        Direction = Input.GetAxisRaw("Horizontal");
         legacyJumpPressed = Input.GetKeyDown(KeyCode.Space);
         legacyDashPressed = Input.GetKeyDown(KeyCode.J);
-
-        HandleMovement();
 
         if (legacyJumpPressed)
         {
@@ -127,6 +116,11 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void FixedUpdate()
+    {
+        HandleMovement();
+    }
+
     private void HandleMovement()
     {
         isGrounded = GetGroundedStatus();
@@ -136,21 +130,28 @@ public class PlayerController : MonoBehaviour
             return;
         }
         rb2d.linearVelocity = new Vector2(
-            MovementDirection * moveSpeed, 
+            Direction * moveSpeed, 
             rb2d.linearVelocity.y
         );
-
     }
+
+    private void LateUpdate()
+    {
+        VerticalTransformFlip();
+    }
+
 
     private void VerticalTransformFlip()
     {
         switch (rb2d.linearVelocityX)
         {
             case < 0:
-                transform.rotation = Quaternion.AngleAxis(180f, Vector3.up);
+                GetComponent<SpriteRenderer>().flipX = true;
+                //transform.rotation = Quaternion.AngleAxis(180f, Vector3.up);
                 break;
             case > 0:
-                transform.rotation = Quaternion.AngleAxis(0f, Vector3.up);
+                GetComponent<SpriteRenderer>().flipX = false;
+                //transform.rotation = Quaternion.AngleAxis(0f, Vector3.up);
                 break;
             default:
                 break;
@@ -160,7 +161,7 @@ public class PlayerController : MonoBehaviour
     public void OnMove(InputValue value)
     {
         // When a move key is pressed, get whether they are moving in a negative (left) or positive (right) direction.
-        MovementDirection = value.Get<float>();
+        Direction = value.Get<float>();
     }
 
     public void OnJump()
@@ -187,7 +188,7 @@ public class PlayerController : MonoBehaviour
         }
 
         rb2d.linearVelocity = new Vector2(
-            MovementDirection * moveSpeed,
+            Direction * moveSpeed,
             jumpSpeed
         );
         _ = StartCoroutine(HandleJumpGravity());
@@ -195,7 +196,7 @@ public class PlayerController : MonoBehaviour
 
     public void OnDash()
     {
-        bool playerMoving = MovementDirection != 0f;
+        bool playerMoving = Direction != 0f;
         if (!dashAvailable || !playerMoving)
         {
             return;
@@ -207,34 +208,34 @@ public class PlayerController : MonoBehaviour
 
     private bool GetGroundedStatus()
     {
-        Vector2 direction = Vector2.down;
+        Vector2 rayDirection = Vector2.down;
 
-        CapsuleCollider2D playerCollider = GetComponent<CapsuleCollider2D>();
+        CapsuleCollider2D collider = GetComponent<CapsuleCollider2D>();
         Vector2 leftPos = new(
-            transform.position.x - playerCollider.size.x / 2,
+            transform.position.x - collider.size.x / 2,
             transform.position.y
         );
         Vector2 rightPos = new(
-            transform.position.x + playerCollider.size.x / 2,
+            transform.position.x + collider.size.x / 2,
             transform.position.y
         );
 
-        Debug.DrawRay(leftPos, direction * groundedRayDistance, Color.red);
-        Debug.DrawRay(rightPos, direction * groundedRayDistance, Color.red);
+        Debug.DrawRay(leftPos, rayDirection * groundedRayDistance, Color.red);
+        Debug.DrawRay(rightPos, rayDirection * groundedRayDistance, Color.red);
 
-        RaycastHit2D leftHit = Physics2D.Raycast(leftPos, direction, groundedRayDistance, groundLayer);
-        RaycastHit2D rightHit = Physics2D.Raycast(rightPos, direction, groundedRayDistance, groundLayer);
+        RaycastHit2D leftHit = Physics2D.Raycast(leftPos, rayDirection, groundedRayDistance, groundLayer);
+        RaycastHit2D rightHit = Physics2D.Raycast(rightPos, rayDirection, groundedRayDistance, groundLayer);
         return leftHit.collider || rightHit.collider;
     }
 
     private IEnumerator HandleDash()
     {
-        float previousDirection = MovementDirection;
-        float previousVelocity = rb2d.linearVelocity.x;
+        float previousDirection = Direction;
+        float previousVelocityX = rb2d.linearVelocity.x;
         float previousGravity = rb2d.gravityScale;
 
         Vector2 dashStartPos = transform.position;
-        Vector2 dashForce = new(MovementDirection * dashSpeed, 0);
+        Vector2 dashForce = new(Direction * dashSpeed, rb2d.linearVelocityY);
 
         rb2d.AddForce(dashForce, ForceMode2D.Impulse);
         rb2d.gravityScale = 0f;
@@ -242,7 +243,6 @@ public class PlayerController : MonoBehaviour
 
         yield return new WaitUntil(() =>
         {
-
             bool isDashFinished = Vector2.Distance(dashStartPos, transform.position) >= dashDistance;
             return isDashFinished;
         });
@@ -251,7 +251,7 @@ public class PlayerController : MonoBehaviour
         rb2d.gravityScale = previousGravity;
 
         // Apply the previous velocity in the current direction.
-        rb2d.linearVelocityX = Mathf.Abs(previousVelocity) * previousDirection;
+        rb2d.linearVelocityX = Mathf.Abs(previousVelocityX) * previousDirection;
     }
 
     private IEnumerator HandleDashCooldown()

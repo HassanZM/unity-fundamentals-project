@@ -8,14 +8,14 @@ public class FallingBlockController : MonoBehaviour
     public enum State
     {
         Fall,
-        Rest,
-        Reset
+        Reset,
+        Rest
     }
     public State CurrentState => currentState;
 
-    [SerializeField, Tooltip("Mace downwards speed")]
+    [SerializeField, Tooltip("Downwards speed")]
     private float downwardSpeed;
-    [SerializeField, Tooltip("Mace upwards speed")] 
+    [SerializeField, Tooltip("Upwards speed")] 
     private float upwardSpeed;
     [SerializeField, Tooltip("Slam cooldown")]
     private float cooldown;
@@ -28,15 +28,14 @@ public class FallingBlockController : MonoBehaviour
         restingPosition = transform.position;
         currentState = State.Fall;
     }
-
     
-    private void Update()
+    private void FixedUpdate()
     {
         switch (currentState)
         {
             case State.Fall:
             {
-                float step = downwardSpeed * Time.deltaTime;
+                float step = downwardSpeed * Time.fixedDeltaTime;
                 transform.position += (Vector3.down * step);
                 break;
             }
@@ -65,6 +64,11 @@ public class FallingBlockController : MonoBehaviour
         currentState = State.Rest;
         _ = StartCoroutine(HandleSlamCooldown());
     }
+    private IEnumerator HandleSlamCooldown()
+    {
+        yield return new WaitForSeconds(cooldown);
+        currentState = State.Fall;
+    }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
@@ -73,13 +77,5 @@ public class FallingBlockController : MonoBehaviour
             currentState = State.Reset;
         }
     }
-
-    private IEnumerator HandleSlamCooldown()
-    {
-        yield return new WaitForSeconds(cooldown);
-        currentState = State.Fall;
-    }
-    
-    
 }
 
