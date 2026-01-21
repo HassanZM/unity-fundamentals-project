@@ -21,7 +21,7 @@ public class WanderingEnemyController : MonoBehaviour
     private void Start()
     {
         Rb2D.linearVelocity = new Vector2(
-            speed, 
+            speed,
             Rb2D.linearVelocity.y
         );
     }
