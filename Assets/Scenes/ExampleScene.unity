@@ -342,7 +342,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2774745076951380000, guid: bda53e4a65b74104cb125298ccb5d216, type: 3}
       propertyPath: m_Name
-      value: DeathZone
+      value: World Boundary Down
       objectReference: {fileID: 0}
     - target: {fileID: 2774745076951380000, guid: bda53e4a65b74104cb125298ccb5d216, type: 3}
       propertyPath: m_TagString
@@ -981,8 +981,8 @@ MonoBehaviour:
   smoothTime: 0.15
   yMinClamp: -3
   yMaxClamp: 20
-  xMinClamp: 0
-  xMaxClamp: 65
+  xMinClamp: -9
+  xMaxClamp: 54
 --- !u!4 &1223117634 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6172779445126761923, guid: c12af3f1ac3ab404c89eb13944ab7407, type: 3}
@@ -6956,7 +6956,7 @@ GameObject:
   - component: {fileID: 2029663114}
   m_Layer: 0
   m_Name: World Boundary Right
-  m_TagString: Untagged
+  m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -7016,7 +7016,7 @@ Transform:
   m_GameObject: {fileID: 2029663113}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 65, y: 0, z: 0}
+  m_LocalPosition: {x: 70, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7034,7 +7034,7 @@ GameObject:
   - component: {fileID: 2100024296}
   m_Layer: 0
   m_Name: World Boundary Left
-  m_TagString: Untagged
+  m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -7477,7 +7477,7 @@ SceneRoots:
   - {fileID: 60862267}
   - {fileID: 792030333}
   - {fileID: 195833317}
-  - {fileID: 689666990}
   - {fileID: 1817492369}
+  - {fileID: 689666990}
   - {fileID: 2100024297}
   - {fileID: 2029663115}
